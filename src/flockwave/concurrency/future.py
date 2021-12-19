@@ -203,7 +203,7 @@ class FutureMap(Mapping[str, Future[T]]):
 
     ```
     map = FutureMap()
-    with map.new("some_id") as future:
+    async with map.new("some_id") as future:
         # pass the future to some other, already running task that will
         # eventually resolve it
         result = await future

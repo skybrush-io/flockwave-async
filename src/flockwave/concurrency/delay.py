@@ -1,7 +1,8 @@
 from functools import partial, wraps
 from inspect import iscoroutine, iscoroutinefunction
+from time import sleep as sleep_sync
 from trio import sleep
-from typing import Any, Awaitable, Callable, Optional, Union, TypeVar
+from typing import Any, Awaitable, Callable, Optional, Union, TypeVar, overload
 
 __all__ = ("delayed",)
 
@@ -56,7 +57,7 @@ def delayed(
 
         async def decorated():
             await sleep(seconds)
-            return fn
+            return await fn
 
         decorated = decorated()
 
@@ -69,7 +70,7 @@ def delayed(
     else:
 
         def decorated(*args, **kwds):
-            sleep(seconds)
+            sleep_sync(seconds)
             return fn(*args, **kwds)
 
     return decorated

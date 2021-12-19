@@ -6,6 +6,7 @@ from .future import Future, FutureCancelled, FutureMap
 from .race import race
 from .tasks import cancellable, CancellableTaskGroup
 from .utils import aclosing
+from .watchdog import Watchdog, use_watchdog
 
 __all__ = (
     "AsyncBundler",
@@ -17,4 +18,6 @@ __all__ = (
     "FutureCancelled",
     "FutureMap",
     "race",
+    "use_watchdog",
+    "Watchdog",
 )
