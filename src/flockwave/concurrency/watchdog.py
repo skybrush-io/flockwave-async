@@ -115,7 +115,6 @@ class Watchdog:
             deadline = current_time() + self.timeout
             while True:
                 to_wait = deadline - current_time()
-                print("Deadline is", deadline, "now is", current_time())
                 if to_wait > 0:
                     await sleep(to_wait)
                     deadline = self._last_notified + self.timeout
