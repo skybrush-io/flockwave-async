@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "flockwave-async"
-version = "1.0.0"
+version = "1.0.1"
 description = "Asynchronous utility functions, mostly for Trio"
 authors = ["Tamas Nepusz <tamas@collmot.com>"]
 packages = [
