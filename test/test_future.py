@@ -150,7 +150,7 @@ async def test_call_method_that_raises(autojump_clock, nursery):
     async def func_that_raises() -> int:
         await sleep(10)
         raise RuntimeError("test error")
-        return 2 * arg
+        return 2
 
     async def resolver():
         await future.call(func_that_raises)
