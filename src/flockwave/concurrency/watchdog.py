@@ -45,9 +45,10 @@ class Watchdog:
         """
         self.on_expired = on_expired
         self.timeout = timeout
+        self.notify()  # make sure that _last_notified has a valid value
 
     def notify(self) -> None:
-        """Function that must be called reguarly while the watchdog is
+        """Function that must be called regularly while the watchdog is
         being used. Has no effect when called when the watchdog is inactive.
         """
         self._last_notified = current_time()
@@ -111,6 +112,7 @@ class Watchdog:
         self, cancel_scope: CancelScope, *, task_status=TASK_STATUS_IGNORED
     ) -> None:
         with cancel_scope:
+            self.notify()  # make sure that _last_notified has a valid value
             task_status.started()
             deadline = current_time() + self.timeout
             while True:
