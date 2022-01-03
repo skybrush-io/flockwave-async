@@ -22,7 +22,7 @@ async def test_watchdog_expiry(autojump_clock):
 
 async def test_watchdog_never_notified(autojump_clock):
     with raises(TooSlowError, match="watchdog expired"):
-        async with use_watchdog(timeout=1) as watchdog:
+        async with use_watchdog(timeout=1):
             for i in range(10):
                 await sleep(i * 0.4)
 
