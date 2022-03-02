@@ -237,3 +237,19 @@ async def test_job_late_submission():
     scheduler.allow_late_submissions = False
     with raises(LateSubmissionError):
         scheduler.schedule_after(-3, Task(1))
+
+
+async def test_job_rescheduling_to_past(nursery, autojump_clock):
+    scheduler = Scheduler(allow_late_submissions=False)
+    job = scheduler.schedule_after(3, Task(1))
+
+    await nursery.start(scheduler.run)
+
+    with raises(LateSubmissionError):
+        scheduler.reschedule_after(-3, job)
+
+    # Failed rescheduling should keep the start time intact
+    assert not job.running and not job.completed
+    await sleep(3.1)
+    assert job.running and not job.completed
+    assert 1 == await job.wait()
