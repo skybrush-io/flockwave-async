@@ -22,7 +22,6 @@ from typing import (
 
 from trio import (
     CancelScope,
-    Cancelled,
     Event,
     Nursery,
     current_time as trio_time,
