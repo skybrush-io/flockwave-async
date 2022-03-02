@@ -330,6 +330,7 @@ class Scheduler(Generic[T]):
 
     def _validate_delay(self, delay: float) -> None:
         if delay < 0 and not self.allow_late_submissions:
+            delay = round(float(delay), 2)
             raise LateSubmissionError(
                 f"Tried to schedule job to {-delay} seconds in the past"
             )
