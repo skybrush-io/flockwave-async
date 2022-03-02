@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
 from functools import partial
 from heapq import heappop, heappush
 from math import inf
@@ -30,7 +31,7 @@ from trio import (
     TASK_STATUS_IGNORED,
 )
 
-__all__ = ("Scheduler", "JobCancelled")
+__all__ = ("Job", "JobCancelled", "LateSubmissionError", "Scheduler")
 
 T = TypeVar("T")
 
@@ -38,6 +39,14 @@ T = TypeVar("T")
 class JobCancelled(RuntimeError):
     """Error thrown when trying to retrieve the result of a job that has been
     cancelled.
+    """
+
+    pass
+
+
+class LateSubmissionError(RuntimeError):
+    """Error thrown when trying to schedule a job to a timestamp that is in the
+    past and the scheduler is set up to disallow such submissions.
     """
 
     pass
@@ -150,8 +159,17 @@ class Scheduler(Generic[T]):
     _jobs_to_items: Dict[int, SchedulerItem[T]]
     """Dictionary mapping IDs jobs to their currently active scheduler items."""
 
-    def __init__(self):
+    allow_late_submissions: bool = True
+    """Whether the scheduler allows late submissions (i.e. jobs that are
+    scheduled to a time that is earlier than the current time when they are
+    submitted). Setting this property to ``False`` will make the scheduler throw
+    a LateSubmissionError_ when someone tries to (re)schedule a job to a
+    timestamp that is earlier than the current time.
+    """
+
+    def __init__(self, allow_late_submissions: bool = True):
         """Constructor."""
+        self.allow_late_submissions = bool(allow_late_submissions)
         self._cancel_scope = CancelScope()
         self._heap = []
         self._jobs_to_items = {}
@@ -167,7 +185,7 @@ class Scheduler(Generic[T]):
         self,
         scheduled_time: Union[float, datetime],
         func: Callable[..., Awaitable[T]],
-        *args
+        *args,
     ) -> Job[T]:
         """Schedules the given function to be called at the given time.
 
@@ -205,6 +223,7 @@ class Scheduler(Generic[T]):
             the scheduled job
         """
         job = Job(cast(Any, partial(func, *args) if args else func))
+        self._validate_delay(delay)
         return self._schedule(trio_time() + delay, job)
 
     def reschedule_to(
@@ -235,6 +254,7 @@ class Scheduler(Generic[T]):
             RuntimeError: if the job is already running
         """
         item = self._get_scheduler_item_for_job(job)
+        self._validate_delay(delay)
         self._reschedule(trio_time() + delay, item)
 
     async def run(self, task_status=TASK_STATUS_IGNORED) -> None:
@@ -262,7 +282,12 @@ class Scheduler(Generic[T]):
         return item
 
     def _local_to_trio_time(self, timestamp: Union[float, datetime]) -> float:
-        """Converts a "local" (POSIX) timestamp to a Trio timestamp."""
+        """Converts a "local" (POSIX) timestamp to a Trio timestamp.
+
+        Raises:
+            LateSubmissionError: when the timestamp is in the past and the
+                ``allow_late_submissions`` property is set to ``False``.
+        """
         # TODO(ntamas): this solution ignores the case when the system clock is
         # adjusted while the job is already scheduled.
         delay = (
@@ -270,6 +295,7 @@ class Scheduler(Generic[T]):
             if isinstance(timestamp, (float, int))
             else timestamp.timestamp()
         ) - posix_time()
+        self._validate_delay(delay)
         return trio_time() + delay
 
     def _schedule(self, timestamp: float, job: Job[T]) -> Job[T]:
@@ -302,3 +328,9 @@ class Scheduler(Generic[T]):
             if job is not None:
                 del self._jobs_to_items[id(job)]
                 nursery.start_soon(job._run)
+
+    def _validate_delay(self, delay: float) -> None:
+        if delay < 0 and not self.allow_late_submissions:
+            raise LateSubmissionError(
+                f"Tried to schedule job to {-delay} seconds in the past"
+            )

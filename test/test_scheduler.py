@@ -3,7 +3,7 @@ from time import time
 from trio import sleep
 from typing import Optional
 
-from flockwave.concurrency import Scheduler, JobCancelled
+from flockwave.concurrency.scheduler import JobCancelled, LateSubmissionError, Scheduler
 
 
 class Task:
@@ -218,3 +218,22 @@ async def test_job_late_cancellation(nursery, autojump_clock):
 
     scheduler.cancel(job)
     assert 1 == await job.wait()
+
+
+async def test_job_late_submission():
+    scheduler = Scheduler()
+    assert scheduler.allow_late_submissions
+
+    scheduler = Scheduler(allow_late_submissions=False)
+    assert not scheduler.allow_late_submissions
+
+    scheduler = Scheduler(allow_late_submissions=True)
+    assert scheduler.allow_late_submissions
+
+    # This should be OK
+    scheduler.schedule_after(-3, Task(1))
+
+    # This is not OK
+    scheduler.allow_late_submissions = False
+    with raises(LateSubmissionError):
+        scheduler.schedule_after(-3, Task(1))
