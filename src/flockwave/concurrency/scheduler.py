@@ -219,9 +219,7 @@ class Scheduler(Generic[T]):
         Raises:
             RuntimeError: if the job is already running
         """
-        item = self._jobs_to_items.pop(id(job), None)
-        if item is None:
-            raise RuntimeError("Job execution has started already")
+        item = self._get_scheduler_item_for_job(job)
         self._reschedule(self._local_to_trio_time(scheduled_time), item)
 
     def reschedule_after(self, delay: float, job: Job[T]) -> None:
@@ -236,9 +234,7 @@ class Scheduler(Generic[T]):
         Raises:
             RuntimeError: if the job is already running
         """
-        item = self._jobs_to_items.pop(id(job), None)
-        if item is None:
-            raise RuntimeError("Job execution has started already")
+        item = self._get_scheduler_item_for_job(job)
         self._reschedule(trio_time() + delay, item)
 
     async def run(self, task_status=TASK_STATUS_IGNORED) -> None:
@@ -252,6 +248,18 @@ class Scheduler(Generic[T]):
                 self._cancel_scope = CancelScope(deadline=next_deadline)  # type: ignore
                 with self._cancel_scope:
                     await sleep_forever()
+
+    def _get_scheduler_item_for_job(self, job: Job[T]) -> SchedulerItem[T]:
+        """Returns the scheduler item corresponding to the given job.
+
+        Raises:
+            RuntimeError: if the job execution has started already and the item
+                was removed from the scheduler.
+        """
+        item = self._jobs_to_items.pop(id(job), None)
+        if item is None:
+            raise RuntimeError("Job execution has started already")
+        return item
 
     def _local_to_trio_time(self, timestamp: Union[float, datetime]) -> float:
         """Converts a "local" (POSIX) timestamp to a Trio timestamp."""
