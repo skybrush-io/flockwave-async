@@ -19,6 +19,7 @@ from typing import (
     Union,
     TypeVar,
 )
+from warnings import warn
 
 from trio import (
     CancelScope,
@@ -58,6 +59,11 @@ class Job(Generic[T]):
     func: Optional[Callable[[], Awaitable[T]]]
     """The sync or async function of the job; ``None`` if the job was
     invalidated due to a change in its scheduled start time.
+    """
+
+    allow_late_start: bool = field(default=False)
+    """Whether the job is allowed to start even if the submission time has
+    passed.
     """
 
     outcome: Optional[Outcome] = None
@@ -158,7 +164,7 @@ class Scheduler(Generic[T]):
     _jobs_to_items: Dict[int, SchedulerItem[T]]
     """Dictionary mapping IDs jobs to their currently active scheduler items."""
 
-    allow_late_submissions: bool = True
+    allow_late_start: bool = True
     """Whether the scheduler allows late submissions (i.e. jobs that are
     scheduled to a time that is earlier than the current time when they are
     submitted). Setting this property to ``False`` will make the scheduler throw
@@ -166,9 +172,20 @@ class Scheduler(Generic[T]):
     timestamp that is earlier than the current time.
     """
 
-    def __init__(self, allow_late_submissions: bool = True):
+    def __init__(self, allow_late_start: bool = True, **kwds):
         """Constructor."""
-        self.allow_late_submissions = bool(allow_late_submissions)
+        if kwds:
+            if "allow_late_submissions" in kwds:
+                warn(
+                    "allow_late_submissions=... is deprecated, use allow_late_start=...",
+                    DeprecationWarning,
+                )
+                allow_late_start = kwds.pop("allow_late_submissions")
+            if kwds:
+                key, _ = kwds.popitem()
+                raise TypeError(f"unexpected keyword argument: {key!r}")
+
+        self.allow_late_start = bool(allow_late_start)
         self._cancel_scope = CancelScope()
         self._heap = []
         self._jobs_to_items = {}
@@ -185,6 +202,7 @@ class Scheduler(Generic[T]):
         scheduled_time: Union[float, datetime],
         func: Callable[..., Awaitable[T]],
         *args,
+        allow_late_start: Optional[bool] = None,
     ) -> Job[T]:
         """Schedules the given function to be called at the given time.
 
@@ -198,16 +216,30 @@ class Scheduler(Generic[T]):
             scheduled_time: the time when the function must be called, either
                 as a POSIX timestamp or as a datetime object
             func: the function to call
+            allow_late_start: whether the function can be scheduled even if the
+                scheduled start time is already later than the current time.
+                ``None`` means to use the default behaviour from the scheduler.
 
         Returns:
             the scheduled job
         """
-        timestamp = self._local_to_trio_time(scheduled_time)
-        job = Job(cast(Any, partial(func, *args) if args else func))
+        if allow_late_start is None:
+            allow_late_start = self.allow_late_start
+        timestamp = self._validate_timestamp(
+            scheduled_time, allow_late_start=allow_late_start
+        )
+        job = Job(
+            cast(Any, partial(func, *args) if args else func),
+            allow_late_start=bool(allow_late_start),
+        )
         return self._schedule(timestamp, job)
 
     def schedule_after(
-        self, delay: float, func: Callable[..., Awaitable[T]], *args
+        self,
+        delay: float,
+        func: Callable[..., Awaitable[T]],
+        *args,
+        allow_late_start: Optional[bool] = None,
     ) -> Job[T]:
         """Schedules the given function to be called after a given number of
         seconds.
@@ -218,12 +250,20 @@ class Scheduler(Generic[T]):
             delay: the number of seconds that must pass before the function is
                 called
             func: the function to call
+            allow_late_start: whether the function can be scheduled even if the
+                scheduled start time is already later than the current time.
+                ``None`` means to use the default behaviour from the scheduler.
 
         Returns:
             the scheduled job
         """
-        self._validate_delay(delay)
-        job = Job(cast(Any, partial(func, *args) if args else func))
+        if allow_late_start is None:
+            allow_late_start = self.allow_late_start
+        self._validate_delay(delay, allow_late_start=allow_late_start)
+        job = Job(
+            cast(Any, partial(func, *args) if args else func),
+            allow_late_start=bool(allow_late_start),
+        )
         return self._schedule(trio_time() + delay, job)
 
     def reschedule_to(
@@ -238,8 +278,11 @@ class Scheduler(Generic[T]):
         Raises:
             RuntimeError: if the job is already running
         """
+        timestamp = self._validate_timestamp(
+            scheduled_time, allow_late_start=job.allow_late_start
+        )
         item = self._pop_scheduler_item_for_job(job)
-        self._reschedule(self._local_to_trio_time(scheduled_time), item)
+        self._reschedule(timestamp, item)
 
     def reschedule_after(self, delay: float, job: Job[T]) -> None:
         """Reschedules a job so it is executed after a given number of
@@ -253,7 +296,7 @@ class Scheduler(Generic[T]):
         Raises:
             RuntimeError: if the job is already running
         """
-        self._validate_delay(delay)
+        self._validate_delay(delay, allow_late_start=job.allow_late_start)
         item = self._pop_scheduler_item_for_job(job)
         self._reschedule(trio_time() + delay, item)
 
@@ -268,23 +311,6 @@ class Scheduler(Generic[T]):
                 self._cancel_scope = CancelScope(deadline=next_deadline)  # type: ignore
                 with self._cancel_scope:
                     await sleep_forever()
-
-    def _local_to_trio_time(self, timestamp: Union[float, datetime]) -> float:
-        """Converts a "local" (POSIX) timestamp to a Trio timestamp.
-
-        Raises:
-            LateSubmissionError: when the timestamp is in the past and the
-                ``allow_late_submissions`` property is set to ``False``.
-        """
-        # TODO(ntamas): this solution ignores the case when the system clock is
-        # adjusted while the job is already scheduled.
-        delay = (
-            float(timestamp)
-            if isinstance(timestamp, (float, int))
-            else timestamp.timestamp()
-        ) - posix_time()
-        self._validate_delay(delay)
-        return trio_time() + delay
 
     def _pop_scheduler_item_for_job(self, job: Job[T]) -> SchedulerItem[T]:
         """Returns the scheduler item corresponding to the given job and removes
@@ -330,9 +356,35 @@ class Scheduler(Generic[T]):
                 del self._jobs_to_items[id(job)]
                 nursery.start_soon(job._run)
 
-    def _validate_delay(self, delay: float) -> None:
-        if delay < 0 and not self.allow_late_submissions:
+    def _validate_delay(self, delay: float, *, allow_late_start: bool) -> None:
+        """Validates a delay measured in seconds.
+
+        Raises:
+            LateSubmissionError: when the delay is negative and
+                ``allow_late_start`` is set to ``False``.
+        """
+        if delay < 0 and not allow_late_start:
             delay = round(float(delay), 2)
             raise LateSubmissionError(
                 f"Tried to schedule job to {-delay} seconds in the past"
             )
+
+    def _validate_timestamp(
+        self, timestamp: Union[float, datetime], *, allow_late_start: bool
+    ) -> float:
+        """Validates a "local" (POSIX) timestamp and returns the equivalent
+        Trio timestamp to be used in the scheduler.
+
+        Raises:
+            LateSubmissionError: when the timestamp is in the past and
+                ``allow_late_start`` is set to ``False``.
+        """
+        # TODO(ntamas): this solution ignores the case when the system clock is
+        # adjusted while the job is already scheduled.
+        delay = (
+            float(timestamp)
+            if isinstance(timestamp, (float, int))
+            else timestamp.timestamp()
+        ) - posix_time()
+        self._validate_delay(delay, allow_late_start=allow_late_start)
+        return trio_time() + delay
