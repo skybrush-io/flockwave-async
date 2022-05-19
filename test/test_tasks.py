@@ -1,7 +1,10 @@
 from inspect import signature
-from trio import sleep
+from pytest import raises
+from trio import current_time, sleep
 
 from flockwave.concurrency import cancellable, CancellableTaskGroup
+
+from flockwave.concurrency.tasks import AwaitableCancelScope
 
 
 async def test_cancellable(autojump_clock):
@@ -73,3 +76,70 @@ class TestCancellableTaskGroup:
 
         await sleep(5)
         assert ended2 and not ended1
+
+
+class TestAwaitableCancelScope:
+    async def test_normal_cancellation(self, nursery, autojump_clock):
+        scope = AwaitableCancelScope()
+        ended = False
+
+        async def task():
+            nonlocal ended
+            try:
+                with scope:
+                    await sleep(5)
+                    ended = True
+            finally:
+                scope.notify_processed()
+
+        nursery.start_soon(task)
+        now = current_time()
+        await sleep(1)
+        await scope.cancel()
+        assert not ended
+        assert (current_time() - now) < 2
+
+    async def test_normal_cancellation_without_explicit_notification(
+        self, nursery, autojump_clock
+    ):
+        scope = AwaitableCancelScope()
+        ended = False
+
+        async def task():
+            nonlocal ended
+            with scope:
+                await sleep(5)
+                ended = True
+
+        nursery.start_soon(task)
+        now = current_time()
+        await sleep(1)
+        await scope.cancel()
+        assert not ended
+        assert (current_time() - now) < 2
+
+    async def test_cancellation_before_start(self, nursery, autojump_clock):
+        scope = AwaitableCancelScope()
+        ended = False
+
+        async def task():
+            nonlocal ended
+            try:
+                with scope:
+                    await sleep(5)
+                    ended = True
+            finally:
+                scope.notify_processed()
+
+        now = current_time()
+        await sleep(1)
+        await scope.cancel()
+        assert not ended
+        assert (current_time() - now) < 2
+
+    async def test_entering_twice(self):
+        scope = AwaitableCancelScope()
+        with scope:
+            with raises(RuntimeError, match="may only be entered once"):
+                with scope:
+                    pass
