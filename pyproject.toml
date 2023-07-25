@@ -10,24 +10,28 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-trio = ">=0.18.0"
-trio-util = ">=0.7.0"
+trio = "^0.22.2"
+trio-util = "^0.7.0"
 
-[tool.poetry.dev-dependencies]
-pytest = "^7.1.1"
-pytest-trio = ">=0.6.0"
-pytest-cov = "^3.0.0"
-coverage = {extras = ["toml"], version = "^6.0"}
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-trio = "^0.8.0"
+pytest-cov = "^4.1.0"
+coverage = {extras = ["toml"], version = "^7.2.7"}
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "primary"
 
 [[tool.poetry.source]]
 name = "collmot"
 url = "https://pypi.collmot.com/simple/"
-secondary = true
+priority = "explicit"
 
 [[tool.poetry.source]]
 name = "fury"
 url = "https://pypi.fury.io/skybrush/"
-secondary = true
+priority = "supplemental"
 
 [tool.coverage.paths]
 source = ["src"]
