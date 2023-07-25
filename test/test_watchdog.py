@@ -30,7 +30,7 @@ async def test_watchdog_never_notified(autojump_clock):
 async def test_sync_start(autojump_clock):
     async with open_nursery() as nursery:
         with Watchdog(timeout=1).use_soon(nursery) as watchdog:
-            for i in range(10):
+            for _i in range(10):
                 await sleep(0.5)
                 watchdog.notify()
             nursery.cancel_scope.cancel()

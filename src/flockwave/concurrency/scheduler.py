@@ -179,6 +179,7 @@ class Scheduler(Generic[T]):
                 warn(
                     "allow_late_submissions=... is deprecated, use allow_late_start=...",
                     DeprecationWarning,
+                    stacklevel=1,
                 )
                 allow_late_start = kwds.pop("allow_late_submissions")
             if kwds:

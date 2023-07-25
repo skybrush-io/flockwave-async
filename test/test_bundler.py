@@ -6,8 +6,8 @@ from flockwave.concurrency import AsyncBundler
 
 async def test_yields_nothing_when_empty(autojump_clock):
     with move_on_after(10):
-        async for bundle in AsyncBundler():
-            assert False, "bundler should not yield any bundles"
+        async for _bundle in AsyncBundler():
+            raise AssertionError("bundler should not yield any bundles")
 
 
 async def test_yields_all_items_after_add(autojump_clock):
@@ -17,7 +17,7 @@ async def test_yields_all_items_after_add(autojump_clock):
         bundler.add(3)
         bundler.add(5)
         async for bundle in bundler:
-            assert bundle == set([2, 3, 5])
+            assert bundle == {2, 3, 5}
 
 
 async def test_yields_all_items_after_add_many(autojump_clock):
@@ -26,7 +26,7 @@ async def test_yields_all_items_after_add_many(autojump_clock):
         bundler.add_many([2, 3, 5, 7])
         bundler.add_many((11, 13))
         async for bundle in bundler:
-            assert bundle == set([2, 3, 5, 7, 11, 13])
+            assert bundle == {2, 3, 5, 7, 11, 13}
 
 
 async def test_clears_items_after_yielding(autojump_clock):
@@ -35,14 +35,14 @@ async def test_clears_items_after_yielding(autojump_clock):
         bundler.add_many([2, 3, 5, 7])
         async with bundler.iter() as bundle_iter:
             async for bundle in bundle_iter:
-                assert bundle == set([2, 3, 5, 7])
+                assert bundle == {2, 3, 5, 7}
                 break
 
         bundler.add_many((11, 13))
 
         was_in_loop = False
         async for bundle in bundler:
-            assert bundle == set([11, 13])
+            assert bundle == {11, 13}
             was_in_loop = True
         assert was_in_loop
 
@@ -63,7 +63,7 @@ async def test_clears_items_before_yielding(autojump_clock):
 
         was_in_loop = False
         async for bundle in bundler:
-            assert bundle == set([11, 13])
+            assert bundle == {11, 13}
             was_in_loop = True
         assert was_in_loop
 
@@ -74,13 +74,13 @@ async def test_filters_duplicates(autojump_clock):
         bundler.add_many([2, 3, 3, 5, 5, 5, 7])
         async with bundler.iter() as bundle_iter:
             async for bundle in bundle_iter:
-                assert bundle == set([2, 3, 5, 7])
+                assert bundle == {2, 3, 5, 7}
                 break
         bundler.add_many((2, 2, 3, 11))
 
         was_in_loop = False
         async for bundle in bundler:
-            assert bundle == set([2, 3, 11])
+            assert bundle == {2, 3, 11}
             was_in_loop = True
         assert was_in_loop
 
