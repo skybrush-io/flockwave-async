@@ -18,7 +18,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Poetry
-        uses: snok/install-poetry@v2
+        uses: abatilo/actions-poetry@v2
 
       - name: Load cached virtualenv
         id: cached-poetry-dependencies
