@@ -78,7 +78,10 @@ async def test_callback_returning_different_timeout(autojump_clock):
     next_timeout_after_expiry = 18
 
     def on_expired() -> float:
-        nonlocal notify_call_count_when_expired_first, on_expired_called_at, next_timeout_after_expiry
+        nonlocal \
+            notify_call_count_when_expired_first, \
+            on_expired_called_at, \
+            next_timeout_after_expiry
         if notify_call_count_when_expired_first == 0:
             notify_call_count_when_expired_first = notify_called
         on_expired_called_at.append(current_time())

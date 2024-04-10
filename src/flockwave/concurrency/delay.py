@@ -18,7 +18,7 @@ def delayed(
     seconds: float,
     fn: Optional[Union[Callable[..., T], Callable[..., Awaitable[T]]]] = None,
     *,
-    ensure_async: bool = False
+    ensure_async: bool = False,
 ) -> Union[Callable[..., T], Callable[..., Awaitable[T]]]:
     """Decorator or decorator factory that delays the execution of a
     synchronous function, coroutine or coroutine-returning function with a
