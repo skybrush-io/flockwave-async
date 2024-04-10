@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from trio import Lock
 from trio_util import RepeatedEvent
-from typing import AsyncGenerator, AsyncIterator, Generic, Iterable, Set, TypeVar
+from typing import AsyncGenerator, AsyncIterator, Generic, Iterable, TypeVar
 
 __all__ = ("AsyncBundler",)
 
@@ -23,7 +23,7 @@ class AsyncBundler(Generic[T]):
     the bundle asynchronously and takes all items from it in each iteration.
     """
 
-    _data: Set[T]
+    _data: set[T]
     _event: RepeatedEvent
     _lock: Lock
 
@@ -57,14 +57,14 @@ class AsyncBundler(Generic[T]):
         self._data.clear()
 
     @asynccontextmanager
-    async def iter(self) -> AsyncIterator[AsyncGenerator[Set[T], None]]:
+    async def iter(self) -> AsyncIterator[AsyncGenerator[set[T], None]]:
         it = self.__aiter__()
         try:
             yield it
         finally:
             await it.aclose()
 
-    async def __aiter__(self) -> AsyncGenerator[Set[T], None]:
+    async def __aiter__(self) -> AsyncGenerator[set[T], None]:
         """Asynchronously iterates over non-empty batches of items that
         were added to the set.
         """

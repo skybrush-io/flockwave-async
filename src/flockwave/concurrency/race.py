@@ -1,6 +1,6 @@
 from functools import partial
 from trio import open_nursery
-from typing import Awaitable, Callable, Dict, List, Tuple, TypeVar
+from typing import Awaitable, Callable, TypeVar
 
 __all__ = ("race",)
 
@@ -8,12 +8,15 @@ T = TypeVar("T")
 T2 = TypeVar("T2")
 
 
-async def race(funcs: Dict[str, Callable[[], T]]) -> Tuple[str, T]:
+async def race(funcs: dict[str, Callable[[], Awaitable[T]]]) -> tuple[str, T]:
     """Run multiple async functions concurrently and wait for at least one of
     them to complete. Return the key corresponding to the function and the
     result of the function as well.
+
+    Raises:
+        ExceptionGroup: when an exception happens in one of the functions
     """
-    holder: List[Tuple[str, T]] = []
+    holder: list[tuple[str, T]] = []
 
     async with open_nursery() as nursery:
         cancel = nursery.cancel_scope.cancel
@@ -25,7 +28,7 @@ async def race(funcs: Dict[str, Callable[[], T]]) -> Tuple[str, T]:
 
 
 def _cancel_and_set_result(
-    cancel: Callable[[], None], holder: List[Tuple[str, T]], key: str, value: T
+    cancel: Callable[[], None], holder: list[tuple[str, T]], key: str, value: T
 ) -> None:
     holder.append((key, value))
     cancel()

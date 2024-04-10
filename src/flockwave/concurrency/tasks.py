@@ -15,7 +15,7 @@ def cancellable(func):
         with cancel_scope:
             return await func(*args, **kwds)
 
-    decorated._cancellable = True
+    decorated._cancellable = True  # type: ignore
 
     return decorated
 

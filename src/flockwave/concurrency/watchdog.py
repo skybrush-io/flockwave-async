@@ -20,7 +20,7 @@ class Watchdog:
     call this method periodically while the watchdog is active.
 
     May call a pre-defined method when `notify()` was not called in time.
-    Raises TooSlowError_ if no callback is defined.
+    Raises TooSlowError_ in an associated nursery if no callback is defined.
     """
 
     on_expired: Optional[Callable[[], Optional[float]]]

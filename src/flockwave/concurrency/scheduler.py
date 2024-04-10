@@ -12,9 +12,7 @@ from typing import (
     Any,
     Awaitable,
     Callable,
-    Dict,
     Generic,
-    List,
     Optional,
     Union,
     TypeVar,
@@ -56,10 +54,8 @@ class LateSubmissionError(RuntimeError):
 class Job(Generic[T]):
     """A single job in the scheduler."""
 
-    func: Optional[Callable[[], Awaitable[T]]]
-    """The sync or async function of the job; ``None`` if the job was
-    invalidated due to a change in its scheduled start time.
-    """
+    func: Callable[[], Awaitable[T]]
+    """The sync or async function of the job."""
 
     allow_late_start: bool = field(default=False)
     """Whether the job is allowed to start even if the submission time has
@@ -158,10 +154,10 @@ class Scheduler(Generic[T]):
     _cancel_scope: CancelScope
     """The cancel scope that stores the next wakeup time of the scheduler."""
 
-    _heap: List[SchedulerItem[T]]
+    _heap: list[SchedulerItem[T]]
     """The list of jobs in the scheduler, along with their timestamps."""
 
-    _jobs_to_items: Dict[int, SchedulerItem[T]]
+    _jobs_to_items: dict[int, SchedulerItem[T]]
     """Dictionary mapping IDs jobs to their currently active scheduler items."""
 
     allow_late_start: bool = True

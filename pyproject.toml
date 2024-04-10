@@ -10,6 +10,7 @@ license = "MIT"
 python = "^3.9"
 trio = ">=0.24.0"
 trio-util = ">=0.7.0"
+exceptiongroup = "^1.2.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.0"
