@@ -1,5 +1,7 @@
-from pytest import raises
+from contextlib import contextmanager
+
 from trio import current_time, open_nursery, sleep, TooSlowError
+from trio.testing import RaisesGroup, Matcher
 
 from flockwave.concurrency import use_watchdog
 from flockwave.concurrency.watchdog import Watchdog
@@ -12,8 +14,14 @@ async def test_watchdog_normal_operation(autojump_clock):
             watchdog.notify()
 
 
+@contextmanager
+def watchdog_expires():
+    with RaisesGroup(Matcher(TooSlowError, match="watchdog expired")):
+        yield
+
+
 async def test_watchdog_expiry(autojump_clock):
-    with raises(TooSlowError, match="watchdog expired"):
+    with watchdog_expires():
         async with use_watchdog(timeout=1) as watchdog:
             for i in range(10):
                 await sleep(i * 0.4)
@@ -21,7 +29,7 @@ async def test_watchdog_expiry(autojump_clock):
 
 
 async def test_watchdog_never_notified(autojump_clock):
-    with raises(TooSlowError, match="watchdog expired"):
+    with watchdog_expires():
         async with use_watchdog(timeout=1):
             for i in range(10):
                 await sleep(i * 0.4)
@@ -37,7 +45,7 @@ async def test_sync_start(autojump_clock):
 
 
 async def test_sync_start_expiry(autojump_clock):
-    with raises(TooSlowError, match="watchdog expired"):
+    with watchdog_expires():
         async with open_nursery() as nursery:
             with Watchdog(timeout=1).use_soon(nursery) as watchdog:
                 for i in range(10):
