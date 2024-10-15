@@ -45,7 +45,9 @@ class CancellableTaskGroup:
         """Starts a new task in the task group."""
         cancel_scope = CancelScope()
         self._cancel_scopes.append(cancel_scope)
-        self._nursery.start_soon(partial(cancellable(func), cancel_scope=cancel_scope))
+        self._nursery.start_soon(
+            partial(cancellable(func), *args, cancel_scope=cancel_scope)
+        )
 
 
 C = TypeVar("C", bound="AwaitableCancelScope")
