@@ -1,16 +1,19 @@
-[tool.poetry]
+[project]
 name = "flockwave-async"
 version = "1.4.3"
 description = "Asynchronous utility functions and classes, mostly for Trio"
-authors = ["Tamas Nepusz <tamas@collmot.com>"]
-packages = [{ include = "flockwave", from = "src" }]
+authors = [{ name = "Tamas Nepusz", email = "tamas@collmot.com" }]
 license = "MIT"
+requires-python = ">=3.9"
+dependencies = [
+    "trio>=0.24.0",
+    "trio-util>=0.7.0",
+    "exceptiongroup>=1.2.0",
+    "deprecated (>=1.2.18,<2.0.0)",
+]
 
-[tool.poetry.dependencies]
-python = "^3.9"
-trio = ">=0.24.0"
-trio-util = ">=0.7.0"
-exceptiongroup = "^1.2.0"
+[tool.poetry]
+packages = [{ include = "flockwave", from = "src" }]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.0"
