@@ -1,27 +1,7 @@
 from pytest import raises
-from trio import fail_after, move_on_after, sleep, TooSlowError
+from trio import fail_after, sleep, TooSlowError
 
-from flockwave.concurrency import (
-    aclosing,
-    delayed,
-    race,
-)
-
-
-async def test_aclosing(autojump_clock):
-    async def wait():
-        for i in range(100):
-            await sleep(1)
-            yield i
-
-    items = []
-    gen = wait()
-    with move_on_after(4.5):
-        async with aclosing(gen):
-            async for item in gen:
-                items.append(item)
-
-    assert items == [0, 1, 2, 3]
+from flockwave.concurrency import delayed, race
 
 
 def test_delayed_sync():
