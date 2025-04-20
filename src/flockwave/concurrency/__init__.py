@@ -6,13 +6,11 @@ from .future import Future, FutureCancelled, FutureMap
 from .race import race
 from .scheduler import Job, Scheduler
 from .tasks import AwaitableCancelScope, cancellable, CancellableTaskGroup
-from .utils import aclosing
 from .watchdog import Watchdog, use_watchdog
 
 __all__ = (
     "AsyncBundler",
     "AwaitableCancelScope",
-    "aclosing",
     "cancellable",
     "CancellableTaskGroup",
     "delayed",
