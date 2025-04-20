@@ -9,7 +9,6 @@ dependencies = [
     "trio>=0.24.0",
     "trio-util>=0.7.0",
     "exceptiongroup>=1.2.0",
-    "deprecated (>=1.2.18,<2.0.0)",
 ]
 
 [tool.poetry]
