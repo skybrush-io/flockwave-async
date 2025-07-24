@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from functools import partial
-from trio import open_nursery
+from anyio import create_task_group
 from typing import Awaitable, Callable, TypeVar
 
 __all__ = ("race",)
@@ -19,11 +19,11 @@ async def race(funcs: Mapping[str, Callable[[], Awaitable[T]]]) -> tuple[str, T]
     """
     holder: list[tuple[str, T]] = []
 
-    async with open_nursery() as nursery:
-        cancel = nursery.cancel_scope.cancel
+    async with create_task_group() as tg:
+        cancel = tg.cancel_scope.cancel
         for key, func in funcs.items():
             set_result = partial(_cancel_and_set_result, cancel, holder, key)
-            nursery.start_soon(_wait_and_call, func, set_result)
+            tg.start_soon(_wait_and_call, func, set_result)
 
     return holder[0]
 

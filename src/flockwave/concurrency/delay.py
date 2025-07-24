@@ -1,7 +1,7 @@
+from anyio import sleep
 from functools import partial, wraps
 from inspect import iscoroutine, iscoroutinefunction
 from time import sleep as sleep_sync
-from trio import sleep
 from typing import Any, Awaitable, Callable, Optional, Union, TypeVar
 
 __all__ = ("delayed",)

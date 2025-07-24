@@ -1,6 +1,6 @@
+from anyio import create_task_group
 from functools import partial
 from operator import setitem
-from trio import open_nursery
 from typing import Awaitable, Callable, Mapping, Sequence, TypeVar, cast, overload
 
 from .race import _wait_and_call
@@ -44,10 +44,10 @@ async def _gather_map(
 ) -> Mapping[str, T]:
     result: dict[str, T] = {}
 
-    async with open_nursery() as nursery:
+    async with create_task_group() as tg:
         for key, func in funcs.items():
             set_result = partial(setitem, result, key)
-            nursery.start_soon(_wait_and_call, func, set_result)
+            tg.start_soon(_wait_and_call, func, set_result)
 
     return result
 
@@ -57,7 +57,7 @@ async def _gather_seq(
 ) -> Sequence[T]:
     result: list[T | None] = [None] * len(funcs)
 
-    async with open_nursery() as nursery:
+    async with create_task_group() as nursery:
         for index, func in enumerate(funcs):
             set_result = partial(setitem, result, index)
             nursery.start_soon(_wait_and_call, func, set_result)
