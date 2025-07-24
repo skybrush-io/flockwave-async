@@ -6,7 +6,7 @@ import trio
 from flockwave.concurrency.race import race
 
 
-async def test_race_returns_first_completed():
+async def test_race_returns_first_completed(autojump_clock):
     async def fast():
         await trio.sleep(0.1)
         return "fast"
@@ -21,7 +21,7 @@ async def test_race_returns_first_completed():
     assert result == "fast"
 
 
-async def test_race_cancels_slow_function():
+async def test_race_cancels_slow_function(autojump_clock):
     slow_executed = False
 
     async def fast():
@@ -38,7 +38,7 @@ async def test_race_cancels_slow_function():
     assert not slow_executed
 
 
-async def test_race_with_single_function():
+async def test_race_with_single_function(autojump_clock):
     async def only():
         await trio.sleep(0.05)
         return "single"
@@ -49,7 +49,7 @@ async def test_race_with_single_function():
     assert result == "single"
 
 
-async def test_race_raises_exception_group():
+async def test_race_raises_exception_group(autojump_clock):
     async def ok():
         await trio.sleep(0.1)
         return "ok"
