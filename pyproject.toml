@@ -5,34 +5,23 @@ description = "Asynchronous utility functions and classes, mostly for Trio"
 authors = [{ name = "Tamas Nepusz", email = "tamas@collmot.com" }]
 license = "MIT"
 requires-python = ">=3.10"
-dependencies = [
-    "trio>=0.24.0",
-    "trio-util>=0.7.0",
-    "exceptiongroup>=1.2.0",
+dependencies = ["trio>=0.24.0", "trio-util>=0.7.0", "exceptiongroup>=1.2.0"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.1.0",
+    "pytest-trio>=0.8.0",
+    "pytest-cov>=5.0.0",
+    "coverage[toml]>=7.4.0",
 ]
 
-[tool.poetry]
-packages = [{ include = "flockwave", from = "src" }]
+[tool.uv.build-backend]
+module-name = "flockwave.concurrency"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.1.0"
-pytest-trio = ">=0.8.0"
-pytest-cov = "^5.0.0"
-coverage = { extras = ["toml"], version = "^7.4.0" }
-
-[[tool.poetry.source]]
-name = "PyPI"
-priority = "primary"
-
-[[tool.poetry.source]]
-name = "collmot"
-url = "https://pypi.collmot.com/simple/"
-priority = "explicit"
-
-[[tool.poetry.source]]
+[[tool.uv.index]]
 name = "fury"
 url = "https://pypi.fury.io/skybrush/"
-priority = "supplemental"
+publish-url = "https://pypi.fury.io/skybrush/"
 
 [tool.coverage.paths]
 source = ["src"]
@@ -52,5 +41,5 @@ lint.ignore = ["B905", "C901", "E402", "E501"]
 lint.select = ["B", "C", "E", "F", "W"]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.8.0"]
+build-backend = "uv_build"
