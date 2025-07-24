@@ -29,6 +29,7 @@ async def test_race_cancels_slow_function(autojump_clock):
         return "fast"
 
     async def slow():
+        nonlocal slow_executed
         await trio.sleep(1)
         slow_executed = True
         return "slow"
