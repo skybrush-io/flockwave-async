@@ -3,6 +3,7 @@
 from .bundler import AsyncBundler
 from .delay import delayed
 from .future import Future, FutureCancelled, FutureMap
+from .gather import gather
 from .race import race
 from .scheduler import Job, Scheduler
 from .tasks import AwaitableCancelScope, cancellable, CancellableTaskGroup
@@ -17,6 +18,7 @@ __all__ = (
     "Future",
     "FutureCancelled",
     "FutureMap",
+    "gather",
     "Job",
     "race",
     "Scheduler",
