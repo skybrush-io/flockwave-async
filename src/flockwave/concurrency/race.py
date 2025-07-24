@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from functools import partial
 from trio import open_nursery
 from typing import Awaitable, Callable, TypeVar
@@ -8,7 +9,7 @@ T = TypeVar("T")
 T2 = TypeVar("T2")
 
 
-async def race(funcs: dict[str, Callable[[], Awaitable[T]]]) -> tuple[str, T]:
+async def race(funcs: Mapping[str, Callable[[], Awaitable[T]]]) -> tuple[str, T]:
     """Run multiple async functions concurrently and wait for at least one of
     them to complete. Return the key corresponding to the function and the
     result of the function as well.
