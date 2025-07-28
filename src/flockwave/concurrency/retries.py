@@ -122,10 +122,16 @@ class ExponentialBackoffPolicy(RetryPolicy):
         max_timeout: Optional[float] = None,
     ):
         self.max_retries = max_retries
-        self.base_timeout = base_timeout
         self.scale_factor = scale_factor
         self.max_timeout = max_timeout
+        self._set_base_timeout(base_timeout)
         self.notify_start()
+
+    def _set_base_timeout(self, value: float) -> None:
+        if self.max_timeout is not None and value > self.max_timeout:
+            self.base_timeout = self.max_timeout
+        else:
+            self.base_timeout = value
 
     def notify_start(self) -> float:
         self._remaining = (
@@ -212,8 +218,8 @@ class AdaptiveExponentialBackoffPolicy(ExponentialBackoffPolicy):
             self._srtt = (1 - self.alpha) * self._srtt + self.alpha * rtt
 
         granularity = 0.001
-        self.base_timeout = max(
-            self._srtt + max(4 * self._rttvar, granularity), self.min_timeout
+        self._set_base_timeout(
+            max(self._srtt + max(4 * self._rttvar, granularity), self.min_timeout)
         )
 
 
