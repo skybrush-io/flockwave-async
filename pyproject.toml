@@ -7,9 +7,9 @@ license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
     "trio>=0.24.0",
- "trio-util>=0.7.0",
- "exceptiongroup>=1.2.0",
- "anyio>=4.9.0",
+    "trio-util>=0.7.0",
+    "exceptiongroup>=1.2.0",
+    "anyio>=4.9.0",
 ]
 
 [dependency-groups]
@@ -36,6 +36,7 @@ branch = true
 source = ["src"]
 
 [tool.coverage.report]
+exclude_also = ["@(abc\\.)?abstractmethod", "@overload"]
 show_missing = true
 
 [tool.pytest.ini_options]
