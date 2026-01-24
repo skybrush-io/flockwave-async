@@ -13,7 +13,7 @@ from .retries import (
     run_with_retries,
 )
 from .scheduler import Job, Scheduler
-from .tasks import AwaitableCancelScope, cancellable, CancellableTaskGroup
+from .tasks import AwaitableCancelScope, CancellableTaskGroup, cancellable
 from .watchdog import Watchdog, use_watchdog
 
 __all__ = (

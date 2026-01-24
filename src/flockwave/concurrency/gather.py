@@ -1,7 +1,8 @@
-from anyio import create_task_group
 from functools import partial
 from operator import setitem
 from typing import Awaitable, Callable, Mapping, Sequence, TypeVar, cast, overload
+
+from anyio import create_task_group
 
 from .race import _wait_and_call
 
@@ -32,7 +33,7 @@ async def gather(
         ExceptionGroup: when an exception happens in one of the functions
     """
     if isinstance(funcs, Mapping):
-        return await _gather_map(funcs)
+        return await _gather_map(funcs)  # ty:ignore[invalid-argument-type]
     elif isinstance(funcs, Sequence):
         return await _gather_seq(funcs)
     else:

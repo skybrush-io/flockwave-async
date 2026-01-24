@@ -3,7 +3,7 @@ operation with a retry policy.
 """
 
 from abc import ABC, abstractmethod
-from typing import Awaitable, Callable, Optional, TypeVar
+from typing import Awaitable, Callable, TypeVar
 
 from anyio import current_time, fail_after
 
@@ -34,7 +34,7 @@ class RetryPolicy(ABC):
         ...
 
     @abstractmethod
-    def notify_finished(self, retries_needed: int, rtt: Optional[float]) -> None:
+    def notify_finished(self, retries_needed: int, rtt: float | None) -> None:
         """Handles the case when the operation finished (either successfully or
         by throwing an exception).
 
@@ -48,7 +48,7 @@ class RetryPolicy(ABC):
         ...
 
     @abstractmethod
-    def notify_timeout(self) -> Optional[float]:
+    def notify_timeout(self) -> float | None:
         """Handles a timeout in the operation.
 
         Returns:
@@ -81,7 +81,7 @@ class FixedRetryPolicy(RetryPolicy):
         self._remaining = self.max_retries
         return self.timeout
 
-    def notify_finished(self, retries_needed: int, rtt: Optional[float]) -> None:
+    def notify_finished(self, retries_needed: int, rtt: float | None) -> None:
         pass
 
     def notify_timeout(self):
@@ -95,7 +95,7 @@ class FixedRetryPolicy(RetryPolicy):
 class ExponentialBackoffPolicy(RetryPolicy):
     """A retry policy that retries the operation with an exponential backoff."""
 
-    max_retries: Optional[int]
+    max_retries: int | None
     """The number of retries to perform; ``None`` means unlimited retries."""
 
     base_timeout: float
@@ -104,7 +104,7 @@ class ExponentialBackoffPolicy(RetryPolicy):
     scale_factor: float = 2.0
     """The factor by which the timeout is multiplied after each retry."""
 
-    max_timeout: Optional[float] = None
+    max_timeout: float | None = None
     """The maximum timeout for the retries, if any."""
 
     _remaining: float
@@ -119,7 +119,7 @@ class ExponentialBackoffPolicy(RetryPolicy):
         max_retries: int,
         base_timeout: float,
         scale_factor: float = 2.0,
-        max_timeout: Optional[float] = None,
+        max_timeout: float | None = None,
     ):
         self.max_retries = max_retries
         self.scale_factor = scale_factor
@@ -140,10 +140,10 @@ class ExponentialBackoffPolicy(RetryPolicy):
         self._next_timeout = self.base_timeout
         return self._next_timeout
 
-    def notify_finished(self, retries_needed: int, rtt: Optional[float]) -> None:
+    def notify_finished(self, retries_needed: int, rtt: float | None) -> None:
         pass
 
-    def notify_timeout(self) -> Optional[float]:
+    def notify_timeout(self) -> float | None:
         if self._remaining > 0:
             self._next_timeout *= self.scale_factor
             if self.max_timeout is not None:
@@ -197,7 +197,7 @@ class AdaptiveExponentialBackoffPolicy(ExponentialBackoffPolicy):
         super().__init__(*args, **kwds)
         self.min_timeout = self.base_timeout / 2
 
-    def notify_finished(self, retries_needed: int, rtt: Optional[float]) -> None:
+    def notify_finished(self, retries_needed: int, rtt: float | None) -> None:
         if rtt is not None and retries_needed == 0:
             self._update_state(rtt)
 

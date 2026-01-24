@@ -1,7 +1,8 @@
 from collections.abc import Mapping
 from functools import partial
-from anyio import create_task_group
 from typing import Awaitable, Callable, TypeVar
+
+from anyio import create_task_group
 
 __all__ = ("race",)
 

@@ -1,13 +1,13 @@
-from pytest import deprecated_call, raises
 from time import time
+
+from pytest import deprecated_call, raises
 from trio import sleep
-from typing import Optional
 
 from flockwave.concurrency.scheduler import JobCancelled, LateSubmissionError, Scheduler
 
 
 class Task:
-    def __init__(self, result: int = 0, *, error: Optional[str] = None):
+    def __init__(self, result: int = 0, *, error: str | None = None):
         self._result = result
         self._error = error
         self.called = False

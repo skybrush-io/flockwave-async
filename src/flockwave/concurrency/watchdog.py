@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager, contextmanager
+from typing import AsyncIterator, Callable, Iterator
+
 from trio import (
+    TASK_STATUS_IGNORED,
     CancelScope,
     Nursery,
-    TASK_STATUS_IGNORED,
     TooSlowError,
     current_time,
     open_nursery,
     sleep,
 )
-from typing import AsyncIterator, Callable, Iterator, Optional
 
 __all__ = ("Watchdog",)
 
@@ -23,13 +24,13 @@ class Watchdog:
     Raises TooSlowError_ in an associated nursery if no callback is defined.
     """
 
-    on_expired: Optional[Callable[[], Optional[float]]]
+    on_expired: Callable[[], float | None] | None
     timeout: float
 
     _last_notified: float
 
     def __init__(
-        self, timeout: float, on_expired: Optional[Callable[[], Optional[float]]] = None
+        self, timeout: float, on_expired: Callable[[], float | None] | None = None
     ):
         """Constructor.
 
@@ -134,7 +135,7 @@ class Watchdog:
 
 @asynccontextmanager
 async def use_watchdog(
-    timeout: float, on_expired: Optional[Callable[[], Optional[float]]] = None
+    timeout: float, on_expired: Callable[[], float | None] | None = None
 ) -> AsyncIterator[Watchdog]:
     """Simplified interface to creating and running a watchdog."""
     watchdog = Watchdog(timeout, on_expired)

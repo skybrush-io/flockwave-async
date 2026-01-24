@@ -5,28 +5,28 @@ from datetime import datetime
 from functools import partial
 from heapq import heappop, heappush
 from math import inf
-from outcome import acapture, Outcome, Error
 from time import time as posix_time
 from typing import (
-    cast,
     Any,
     Awaitable,
     Callable,
     Generic,
-    Optional,
-    Union,
     TypeVar,
+    cast,
 )
 from warnings import warn
 
+from outcome import Error, Outcome, acapture
 from trio import (
+    TASK_STATUS_IGNORED,
     CancelScope,
     Event,
     Nursery,
-    current_time as trio_time,
     open_nursery,
     sleep_forever,
-    TASK_STATUS_IGNORED,
+)
+from trio import (
+    current_time as trio_time,
 )
 
 __all__ = ("Job", "JobCancelled", "LateSubmissionError", "Scheduler")
@@ -62,7 +62,7 @@ class Job(Generic[T]):
     passed.
     """
 
-    outcome: Optional[Outcome] = None
+    outcome: Outcome | None = None
     """The result of the job"""
 
     _cancel_scope: CancelScope = field(default_factory=CancelScope)
@@ -111,7 +111,7 @@ class Job(Generic[T]):
             self._set_outcome(await acapture(self.func))
 
     def _record_cancellation(self) -> None:
-        self._set_outcome(Error(JobCancelled()))  # type: ignore
+        self._set_outcome(Error(JobCancelled()))
 
     def _set_outcome(self, outcome: Outcome) -> None:
         self.outcome = outcome
@@ -138,7 +138,7 @@ class SchedulerItem(Generic[T]):
     scheduled_time: float
     """Time when the job is supposed to start."""
 
-    job: Optional[Job[T]] = field(compare=False)
+    job: Job[T] | None = field(compare=False)
     """The job itself; ``None`` if the item was invalidated."""
 
     def _invalidate(self) -> None:
@@ -196,10 +196,10 @@ class Scheduler(Generic[T]):
 
     def schedule_at(
         self,
-        scheduled_time: Union[float, datetime],
+        scheduled_time: float | datetime,
         func: Callable[..., Awaitable[T]],
         *args,
-        allow_late_start: Optional[bool] = None,
+        allow_late_start: bool | None = None,
     ) -> Job[T]:
         """Schedules the given function to be called at the given time.
 
@@ -236,7 +236,7 @@ class Scheduler(Generic[T]):
         delay: float,
         func: Callable[..., Awaitable[T]],
         *args,
-        allow_late_start: Optional[bool] = None,
+        allow_late_start: bool | None = None,
     ) -> Job[T]:
         """Schedules the given function to be called after a given number of
         seconds.
@@ -263,9 +263,7 @@ class Scheduler(Generic[T]):
         )
         return self._schedule(trio_time() + delay, job)
 
-    def reschedule_to(
-        self, scheduled_time: Union[float, datetime], job: Job[T]
-    ) -> None:
+    def reschedule_to(self, scheduled_time: float | datetime, job: Job[T]) -> None:
         """Reschedules a job so it is executed at a later time.
 
         Parameters:
@@ -305,7 +303,7 @@ class Scheduler(Generic[T]):
                 self._start_expired_jobs_in(nursery)
 
                 next_deadline = self._heap[0].scheduled_time if self._heap else inf
-                self._cancel_scope = CancelScope(deadline=next_deadline)  # type: ignore
+                self._cancel_scope = CancelScope(deadline=next_deadline)
                 with self._cancel_scope:
                     await sleep_forever()
 
@@ -367,7 +365,7 @@ class Scheduler(Generic[T]):
             )
 
     def _validate_timestamp(
-        self, timestamp: Union[float, datetime], *, allow_late_start: bool
+        self, timestamp: float | datetime, *, allow_late_start: bool
     ) -> float:
         """Validates a "local" (POSIX) timestamp and returns the equivalent
         Trio timestamp to be used in the scheduler.

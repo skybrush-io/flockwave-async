@@ -1,5 +1,5 @@
 from pytest import raises
-from trio import fail_after, sleep, TooSlowError
+from trio import TooSlowError, fail_after, sleep
 
 from flockwave.concurrency import delayed, race
 
@@ -12,12 +12,12 @@ def test_delayed_sync():
         delayed(-3)
 
     assert delayed(0)(sync_func) is sync_func
-    assert delayed(0, sync_func) is sync_func  # type: ignore
+    assert delayed(0, sync_func) is sync_func
 
     delayed_sync_func = delayed(0.005)(sync_func)
     assert delayed_sync_func is not sync_func
 
-    assert delayed_sync_func(42) == sync_func(42)  # type: ignore
+    assert delayed_sync_func(42) == sync_func(42)
 
 
 async def test_delayed_async(nursery, autojump_clock):
@@ -26,19 +26,19 @@ async def test_delayed_async(nursery, autojump_clock):
         return a + 5
 
     assert delayed(0)(async_func) == async_func
-    assert delayed(0, async_func) == async_func  # type: ignore
+    assert delayed(0, async_func) == async_func
 
     delayed_async_func = delayed(3)(async_func)
     assert delayed_async_func is not async_func
 
-    assert await delayed_async_func(42) == await async_func(42)  # type: ignore
+    assert await delayed_async_func(42) == await async_func(42)
 
     with fail_after(2):
         assert await async_func(42) == 47
 
     with raises(TooSlowError):
         with fail_after(2):
-            await delayed_async_func(42)  # type: ignore
+            await delayed_async_func(42)
 
 
 async def test_delayed_coroutine(nursery, autojump_clock):

@@ -1,6 +1,7 @@
 from functools import partial, wraps
-from trio import CancelScope, Event, Nursery
 from typing import TypeVar
+
+from trio import CancelScope, Event, Nursery
 
 __all__ = ("cancellable", "CancellableTaskGroup", "AwaitableCancelScope")
 

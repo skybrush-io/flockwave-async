@@ -1,5 +1,4 @@
 from functools import partial
-from trio import Cancelled, Event, WouldBlock
 from typing import (
     Awaitable,
     Callable,
@@ -7,9 +6,10 @@ from typing import (
     Generic,
     Iterator,
     Mapping,
-    Optional,
     TypeVar,
 )
+
+from trio import Cancelled, Event, WouldBlock
 
 __all__ = ("Future", "FutureCancelled", "FutureMap")
 
@@ -41,9 +41,9 @@ class Future(Generic[T]):
     """
 
     _cancelled: bool
-    _error: Optional[Exception]
+    _error: Exception | None
     _event: Event
-    _value: Optional[T]
+    _value: T | None
 
     def __init__(self):
         self._event = Event()

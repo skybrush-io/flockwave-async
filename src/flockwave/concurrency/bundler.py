@@ -1,7 +1,8 @@
 from contextlib import asynccontextmanager
+from typing import AsyncGenerator, AsyncIterator, Generic, Iterable, TypeVar
+
 from trio import Lock
 from trio_util import RepeatedEvent
-from typing import AsyncGenerator, AsyncIterator, Generic, Iterable, TypeVar
 
 __all__ = ("AsyncBundler",)
 
@@ -73,7 +74,7 @@ class AsyncBundler(Generic[T]):
             if self._lock.locked():
                 raise RuntimeError("AsyncBundler can only have one listener")
 
-            async with self._lock:  # type: ignore
+            async with self._lock:
                 it = self._event.events(repeat_last=True)
                 async for _ in it:
                     result = set(self._data)

@@ -1,12 +1,15 @@
-from anyio import sleep
 from functools import partial, wraps
 from inspect import iscoroutine, iscoroutinefunction
 from time import sleep as sleep_sync
-from typing import Any, Awaitable, Callable, Optional, Union, TypeVar
+from typing import Any, Awaitable, Callable, Coroutine, ParamSpec, TypeVar, overload
+
+from anyio import sleep
 
 __all__ = ("delayed",)
 
+P = ParamSpec("P")
 T = TypeVar("T")
+CR = TypeVar("CR", bound="Coroutine")
 
 
 def _identity(obj: Any) -> Any:
@@ -14,12 +17,39 @@ def _identity(obj: Any) -> Any:
     return obj
 
 
+@overload
 def delayed(
     seconds: float,
-    fn: Optional[Union[Callable[..., T], Callable[..., Awaitable[T]]]] = None,
+    fn: None = None,
     *,
     ensure_async: bool = False,
-) -> Union[Callable[..., T], Callable[..., Awaitable[T]]]:
+) -> Callable[[Callable[P, T] | CR], Callable[P, T] | CR]: ...
+
+
+@overload
+def delayed(
+    seconds: float,
+    fn: CR,
+    *,
+    ensure_async: bool = False,
+) -> CR: ...
+
+
+@overload
+def delayed(
+    seconds: float,
+    fn: Callable[P, T] | Callable[P, Awaitable[T]],
+    *,
+    ensure_async: bool = False,
+) -> Callable[P, T] | Callable[P, Awaitable[T]]: ...
+
+
+def delayed(
+    seconds: float,
+    fn: Callable[P, T] | Callable[P, Awaitable[T]] | None = None,
+    *,
+    ensure_async: bool = False,
+):
     """Decorator or decorator factory that delays the execution of a
     synchronous function, coroutine or coroutine-returning function with a
     given number of seconds.
@@ -53,24 +83,26 @@ def delayed(
             await sleep(seconds)
             return await fn(*args, **kwds)
 
-    elif iscoroutine(fn):
+        return decorated
+
+    if iscoroutine(fn):
 
         async def decorated():
             await sleep(seconds)
             return await fn
 
-        decorated = decorated()
+        return decorated()
 
-    elif ensure_async:
+    if ensure_async:
 
         async def decorated(*args, **kwds):
             await sleep(seconds)
             return fn(*args, **kwds)
 
-    else:
+        return decorated
 
-        def decorated(*args, **kwds):
-            sleep_sync(seconds)
-            return fn(*args, **kwds)
+    def decorated(*args, **kwds):
+        sleep_sync(seconds)
+        return fn(*args, **kwds)
 
     return decorated
