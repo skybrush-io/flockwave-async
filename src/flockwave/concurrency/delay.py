@@ -1,107 +1,111 @@
-from functools import partial, wraps
-from inspect import iscoroutine, iscoroutinefunction
+from functools import wraps
+from inspect import iscoroutinefunction
 from time import sleep as sleep_sync
-from typing import Any, Awaitable, Callable, Coroutine, ParamSpec, TypeVar, overload
+from typing import Awaitable, Callable, ParamSpec, TypeVar, cast, overload
 
 from anyio import sleep
 
-__all__ = ("delayed",)
+__all__ = ("delayed", "delayed_sync")
 
 P = ParamSpec("P")
 T = TypeVar("T")
-CR = TypeVar("CR", bound="Coroutine")
-
-
-def _identity(obj: Any) -> Any:
-    """Identity function that returns its input argument."""
-    return obj
 
 
 @overload
 def delayed(
     seconds: float,
-    fn: None = None,
-    *,
-    ensure_async: bool = False,
-) -> Callable[[Callable[P, T] | CR], Callable[P, T] | CR]: ...
+    fn: Callable[P, Awaitable[T]],
+) -> Callable[P, Awaitable[T]]: ...
 
 
 @overload
 def delayed(
     seconds: float,
-    fn: CR,
-    *,
-    ensure_async: bool = False,
-) -> CR: ...
+    fn: Callable[P, T],
+) -> Callable[P, Awaitable[T]]: ...
 
 
-@overload
 def delayed(
     seconds: float,
     fn: Callable[P, T] | Callable[P, Awaitable[T]],
-    *,
-    ensure_async: bool = False,
-) -> Callable[P, T] | Callable[P, Awaitable[T]]: ...
-
-
-def delayed(
-    seconds: float,
-    fn: Callable[P, T] | Callable[P, Awaitable[T]] | None = None,
-    *,
-    ensure_async: bool = False,
 ):
     """Decorator or decorator factory that delays the execution of a
-    synchronous function, coroutine or coroutine-returning function with a
-    given number of seconds.
+    synchronous or asynchronous function with a given number of seconds.
 
     Parameters:
         seconds: the number of seconds to delay with. Negative numbers will
-            throw an exception. Zero will return the identity function.
-        fn: the function, coroutine or coroutine-returning function to delay
-        ensure_async: when set to `True`, synchronous functions will automatically
-            be converted to asynchronous before delaying them. This is needed
-            if the delayed function is going to be executed in the async
-            event loop because a synchronous function that sleeps will block
-            the entire event loop.
+            throw an exception. Zero will return the input function without any
+            modifications if it is already a coroutine-returning function; otherwise it
+            will return the input function wrapped in an async function that returns an
+            awaitable.
+        fn: the function to delay. `None` to return a decorator that can be used to
+            delay a function.
 
     Returns:
-        the delayed function, coroutine or coroutine-returning function
+        the delayed function if `fn` is not `None`, otherwise a decorator that can be
+        used to delay a function.
     """
     if seconds < 0:
         raise ValueError("delay must not be negative")
 
-    if seconds == 0 and not ensure_async:
-        return _identity if fn is None else fn
+    if seconds == 0:
+        if iscoroutinefunction(fn):
+            return fn
+        else:
+            # We now know that fn is a synchronous function
+            fn_sync = cast("Callable[P, T]", fn)
 
-    if fn is None:
-        return partial(delayed, seconds, ensure_async=ensure_async)
+            @wraps(fn_sync)
+            async def decorated(*args: P.args, **kwds: P.kwargs) -> T:
+                return fn_sync(*args, **kwds)
+
+            return decorated
 
     if iscoroutinefunction(fn):
+        # We now know that fn is an asynchronous function
+        fn = cast("Callable[P, Awaitable[T]]", fn)
 
-        @wraps(fn)
-        async def decorated(*args, **kwds):
+        async def decorated(*args, **kwds) -> T:
             await sleep(seconds)
             return await fn(*args, **kwds)
 
-        return decorated
+    else:
+        # We now know that fn is a synchronous function
+        fn_sync = cast("Callable[P, T]", fn)
 
-    if iscoroutine(fn):
-
-        async def decorated():
+        async def decorated(*args, **kwds) -> T:
             await sleep(seconds)
-            return await fn
+            return fn_sync(*args, **kwds)
 
-        return decorated()
+    return wraps(fn)(decorated)
 
-    if ensure_async:
 
-        async def decorated(*args, **kwds):
-            await sleep(seconds)
-            return fn(*args, **kwds)
+def delayed_sync(
+    seconds: float,
+    fn: Callable[P, T],
+):
+    """Decorator or decorator factory that delays the execution of a synchronous
+    function with a given number of seconds.
 
-        return decorated
+    Parameters:
+        seconds: the number of seconds to delay with. Negative numbers will
+            throw an exception. Zero will return the input function without any
+            modifications.
+        fn: the function to delay. `None` to return a decorator that can be used to
+            delay a function.
 
-    def decorated(*args, **kwds):
+    Returns:
+        the delayed function if `fn` is not `None`, otherwise a decorator that can be
+        used to delay a function.
+    """
+    if seconds < 0:
+        raise ValueError("delay must not be negative")
+
+    if seconds == 0:
+        return fn
+
+    @wraps(fn)
+    def decorated(*args, **kwds) -> T:
         sleep_sync(seconds)
         return fn(*args, **kwds)
 

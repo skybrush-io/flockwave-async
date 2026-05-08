@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-05-08
+
+### Breaking changes
+
+- `delayed()` now always returns an asynchronous function. The `ensure_async=...`
+  parameter was removed.
+
+- `delayed()` no longer supports delaying coroutines.
+
+- The decorator syntax of `@delayed` was removed.
+
+### Added
+
+- `delayed_sync()` was added to provide a way to create a delayed function that is
+  synchronous.
+
 ## [2.2.1] - 2025-07-29
 
 ### Added

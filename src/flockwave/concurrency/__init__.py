@@ -1,7 +1,7 @@
 """Concurrency-related utility functions."""
 
 from .bundler import AsyncBundler
-from .delay import delayed
+from .delay import delayed, delayed_sync
 from .future import Future, FutureCancelled, FutureMap
 from .gather import gather
 from .race import race
@@ -23,6 +23,7 @@ __all__ = (
     "cancellable",
     "CancellableTaskGroup",
     "delayed",
+    "delayed_sync",
     "ExponentialBackoffPolicy",
     "FixedRetryPolicy",
     "Future",
