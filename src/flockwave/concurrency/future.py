@@ -2,7 +2,6 @@ from functools import partial
 from typing import (
     Awaitable,
     Callable,
-    Dict,
     Generic,
     Iterator,
     Mapping,
@@ -216,7 +215,7 @@ class FutureMap(Mapping[str, Future[T]]):
     """
 
     _factory: Callable[[], Future[T]]
-    _futures: Dict[str, Future[T]]
+    _futures: dict[str, Future[T]]
 
     def __init__(self, factory: Callable[[], Future[T]] = Future[T]):
         """Constructor.
