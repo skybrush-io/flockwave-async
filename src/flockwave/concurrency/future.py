@@ -6,6 +6,7 @@ from typing import (
     Generic,
     Iterator,
     Mapping,
+    ParamSpec,
     TypeVar,
 )
 
@@ -13,6 +14,7 @@ from trio import Cancelled, Event, WouldBlock
 
 __all__ = ("Future", "FutureCancelled", "FutureMap")
 
+P = ParamSpec("P")
 T = TypeVar("T")
 
 
@@ -66,7 +68,9 @@ class Future(Generic[T]):
 
         return True
 
-    async def call(self, func: Callable[..., Awaitable[T]], *args, **kwds) -> None:
+    async def call(
+        self, func: Callable[P, Awaitable[T]], *args: P.args, **kwds: P.kwargs
+    ) -> None:
         """Calls the given function, waits for its result and sets the result
         in the future.
 
