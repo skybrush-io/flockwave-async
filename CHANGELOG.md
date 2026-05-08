@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The decorator syntax of `@delayed` was removed.
 
+- Removed deprecated `allow_late_submissions=...` keyword argument from the
+  constructor of `Scheduler`.
+
 ### Added
 
 - `delayed_sync()` was added to provide a way to create a delayed function that is

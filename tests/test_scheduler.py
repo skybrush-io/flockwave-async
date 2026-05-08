@@ -1,6 +1,6 @@
 from time import time
 
-from pytest import deprecated_call, raises
+from pytest import raises
 from trio import sleep
 
 from flockwave.concurrency.scheduler import JobCancelled, LateSubmissionError, Scheduler
@@ -271,16 +271,3 @@ async def test_job_rescheduling_to_past(nursery, autojump_clock):
     await sleep(3.1)
     assert job.running and not job.completed
     assert 1 == await job.wait()
-
-
-async def test_deprecated_constructor_args():
-    with deprecated_call():
-        scheduler = Scheduler(True, allow_late_submissions=False)
-    assert not scheduler.allow_late_start
-
-    with deprecated_call():
-        scheduler = Scheduler(False, allow_late_submissions=True)
-    assert scheduler.allow_late_start
-
-    with raises(TypeError, match="unexpected keyword argument: 'foo'"):
-        scheduler = Scheduler(foo="bar")

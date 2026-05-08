@@ -14,7 +14,6 @@ from typing import (
     TypeVar,
     cast,
 )
-from warnings import warn
 
 from outcome import Error, Outcome, acapture
 from trio import (
@@ -170,18 +169,6 @@ class Scheduler(Generic[T]):
 
     def __init__(self, allow_late_start: bool = True, **kwds):
         """Constructor."""
-        if kwds:
-            if "allow_late_submissions" in kwds:
-                warn(
-                    "allow_late_submissions=... is deprecated, use allow_late_start=...",
-                    DeprecationWarning,
-                    stacklevel=1,
-                )
-                allow_late_start = kwds.pop("allow_late_submissions")
-            if kwds:
-                key, _ = kwds.popitem()
-                raise TypeError(f"unexpected keyword argument: {key!r}")
-
         self.allow_late_start = bool(allow_late_start)
         self._cancel_scope = CancelScope()
         self._heap = []
