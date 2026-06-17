@@ -1,10 +1,7 @@
+from collections.abc import Awaitable, Callable, Iterator, Mapping
 from functools import partial
 from typing import (
-    Awaitable,
-    Callable,
     Generic,
-    Iterator,
-    Mapping,
     ParamSpec,
     TypeVar,
 )

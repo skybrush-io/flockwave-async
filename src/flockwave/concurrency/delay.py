@@ -1,7 +1,8 @@
+from collections.abc import Awaitable, Callable
 from functools import wraps
 from inspect import iscoroutinefunction
 from time import sleep as sleep_sync
-from typing import Awaitable, Callable, ParamSpec, TypeVar, cast, overload
+from typing import ParamSpec, TypeVar, cast, overload
 
 from anyio import sleep
 

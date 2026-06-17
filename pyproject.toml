@@ -44,7 +44,7 @@ trio_mode = true
 
 [tool.ruff]
 lint.ignore = ["B905", "C901", "E402", "E501"]
-lint.select = ["B", "C", "E", "F", "W"]
+lint.select = ["B", "C", "E", "F", "I", "W"]
 
 [build-system]
 requires = ["uv_build>=0.11,<0.12"]

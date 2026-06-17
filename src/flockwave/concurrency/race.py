@@ -1,6 +1,6 @@
-from collections.abc import Mapping
+from collections.abc import Awaitable, Callable, Mapping
 from functools import partial
-from typing import Awaitable, Callable, TypeVar
+from typing import TypeVar
 
 from anyio import create_task_group
 

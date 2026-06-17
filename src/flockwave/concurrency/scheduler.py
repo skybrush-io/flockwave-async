@@ -1,5 +1,6 @@
 """Simple scheduler for starting asynchronous tasks in the future."""
 
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from functools import partial
@@ -8,8 +9,6 @@ from math import inf
 from time import time as posix_time
 from typing import (
     Any,
-    Awaitable,
-    Callable,
     Generic,
     TypeVar,
     cast,

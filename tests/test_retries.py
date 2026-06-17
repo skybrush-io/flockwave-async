@@ -1,5 +1,6 @@
 from anyio import sleep
 from pytest import raises
+
 from flockwave.concurrency import (
     AdaptiveExponentialBackoffPolicy,
     ExponentialBackoffPolicy,

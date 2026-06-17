@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 
-from trio import current_time, open_nursery, sleep, TooSlowError
-from trio.testing import RaisesGroup, Matcher
+from trio import TooSlowError, current_time, open_nursery, sleep
+from trio.testing import Matcher, RaisesGroup
 
 from flockwave.concurrency import use_watchdog
 from flockwave.concurrency.watchdog import Watchdog

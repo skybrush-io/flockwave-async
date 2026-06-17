@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import AsyncIterator, Callable, Iterator
 from contextlib import asynccontextmanager, contextmanager
-from typing import AsyncIterator, Callable, Iterator
 
 from trio import (
     TASK_STATUS_IGNORED,
@@ -80,7 +80,7 @@ class Watchdog:
         return scope
 
     @asynccontextmanager
-    async def use(self, nursery: Nursery) -> AsyncIterator["Watchdog"]:
+    async def use(self, nursery: Nursery) -> AsyncIterator[Watchdog]:
         """Asynchronous context manager that starts the watchdog and waits for
         it to start up, then enters the context. Stops the watchdog automatically
         when exiting the context.
@@ -95,7 +95,7 @@ class Watchdog:
             scope.cancel()
 
     @contextmanager
-    def use_soon(self, nursery: Nursery) -> Iterator["Watchdog"]:
+    def use_soon(self, nursery: Nursery) -> Iterator[Watchdog]:
         """Context manager that starts the watchdog (but does not wait for
         it to start up), then enters the context. Stops the watchdog
         automatically when exiting the context.

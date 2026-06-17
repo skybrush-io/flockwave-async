@@ -1,9 +1,9 @@
 from inspect import signature
+
 from pytest import raises
 from trio import current_time, sleep
 
-from flockwave.concurrency import cancellable, CancellableTaskGroup
-
+from flockwave.concurrency import CancellableTaskGroup, cancellable
 from flockwave.concurrency.tasks import AwaitableCancelScope
 
 

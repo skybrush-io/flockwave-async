@@ -1,7 +1,6 @@
-from exceptiongroup import ExceptionGroup
-
 import pytest
 import trio
+from exceptiongroup import ExceptionGroup
 
 from flockwave.concurrency.race import race
 

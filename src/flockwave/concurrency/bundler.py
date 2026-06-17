@@ -1,5 +1,6 @@
+from collections.abc import AsyncGenerator, AsyncIterator, Iterable
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, AsyncIterator, Generic, Iterable, TypeVar
+from typing import Generic, TypeVar
 
 from trio import Lock
 from trio_util import RepeatedEvent

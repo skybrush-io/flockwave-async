@@ -3,7 +3,8 @@ operation with a retry policy.
 """
 
 from abc import ABC, abstractmethod
-from typing import Awaitable, Callable, TypeVar
+from collections.abc import Awaitable, Callable
+from typing import TypeVar
 
 from anyio import current_time, fail_after
 

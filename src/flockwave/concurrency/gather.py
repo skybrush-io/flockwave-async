@@ -1,6 +1,7 @@
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from functools import partial
 from operator import setitem
-from typing import Awaitable, Callable, Mapping, Sequence, TypeVar, cast, overload
+from typing import TypeVar, cast, overload
 
 from anyio import create_task_group
 
